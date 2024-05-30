@@ -1,0 +1,83 @@
+version: '3'
+
+tasks:
+
+#clean
+  clean:
+    desc: "Delete build folder"
+    cmds: 
+      - task: clean-{OS}
+
+  clean-windows:
+    desc: "Delete build folder for windows"
+    cmds:
+      - rm build -r -force
+
+  clean-linux:
+    desc: "Delete build folder for linux"
+    cmds:
+      - rm -rf build
+
+  clean-darwin:
+    desc: "Delete build folder for mac"
+    cmds:
+      - rm -rf build
+
+# Build containers
+  build-docker-containers:
+    desc: "Build all docker containers"
+    cmds:
+      - task build-authentication-docker-container
+      - task build-customer-docker-container
+      - task build-investment-docker-container
+
+  build-authentication-docker-container:
+    desc: ""
+    cmds:
+      - task: internal-docker-container-{{OS}} 
+        vars:
+          DOCKER_IMAGE: authentication
+  build-customer-docker-container:
+    desc: ""
+    cmds:
+      - task: internal-docker-container-{{OS}} 
+        vars:
+          DOCKER_IMAGE: customer
+  build-investment-docker-container:
+    desc: ""
+    cmds:
+      - task: internal-docker-container-{{OS}} 
+        vars:
+          DOCKER_IMAGE: investment
+
+# Cross platform builders for containers
+  internal-docker-container-windows:
+    desc: "Template to build docker container"
+    cmds:
+      - Powershell.exe mkdir build\\temp\\{{.DOCKER_IMAGE}}-docker
+      - Powershell.exe xcopy /E app build\\temp\\{{.DOCKER_IMAGE}}-docker\\app\\
+      - Powershell.exe xcopy /E internal build\\temp\\{{.DOCKER_IMAGE}}-docker\\internal\\
+      - Powershell.exe copy tupperware\\dockerfiles\\{{.DOCKER_IMAGE}}\\dockerfile build\\temp\\{{.DOCKER_IMAGE}}-docker\\dockerfile
+      - Powershell.exe copy tupperware\\dockerfiles\\{{.DOCKER_IMAGE}}\\start.sh build\\temp\\{{.DOCKER_IMAGE}}-docker\\start.sh
+      - Powershell.exe copy go.mod build\\temp\\{{.DOCKER_IMAGE}}-docker\\go.mod
+      - docker build -t {{.DOCKER_IMAGE}} "build\\temp\\{{.DOCKER_IMAGE}}-docker"
+  internal-docker-container-darwin:
+    desc: "Template to build Docker container (macOS)"
+    cmds:
+      - mkdir "build/temp/{{.DOCKER_IMAGE}}-docker"
+      - cp -R app "build/temp/{{.DOCKER_IMAGE}}-docker/app/"
+      - cp -R internal "build/temp/{{.DOCKER_IMAGE}}-docker/internal/"
+      - cp "tupperware/dockerfiles/{{.DOCKER_IMAGE}}/dockerfile" "build/temp/{{.DOCKER_IMAGE}}-docker/dockerfile"
+      - cp "tupperware/dockerfiles/{{.DOCKER_IMAGE}}/start.sh" "build/temp/{{.DOCKER_IMAGE}}-docker/start.sh"
+      - cp "go.mod" "build/temp/{{.DOCKER_IMAGE}}-docker/go.mod"
+      - docker build -t {{.DOCKER_IMAGE}} "build/temp/{{.DOCKER_IMAGE}}-docker"
+  internal-docker-container-linux:
+    desc: "Template to build Docker container (Linux)"
+    cmds:
+      - mkdir "build/temp/{{.DOCKER_IMAGE}}-docker"
+      - cp -R app "build/temp/{{.DOCKER_IMAGE}}-docker/app/"
+      - cp -R internal "build/temp/{{.DOCKER_IMAGE}}-docker/internal/"
+      - cp "tupperware/dockerfiles/{{.DOCKER_IMAGE}}/dockerfile" "build/temp/{{.DOCKER_IMAGE}}-docker/dockerfile"
+      - cp "tupperware/dockerfiles/{{.DOCKER_IMAGE}}/start.sh" "build/temp/{{.DOCKER_IMAGE}}-docker/start.sh"
+      - cp "go.mod" "build/temp/{{.DOCKER_IMAGE}}-docker/go.mod"
+      - docker build -t {{.DOCKER_IMAGE}} "build/temp/{{.DOCKER_IMAGE}}-docker"
